@@ -22,7 +22,7 @@ public class RecipePublishRequest {
     private String author; // TODO user id will come from oauth token or identity token
     private String description;
     private String difficulty;
-    private long timestamp;
+    private String timestamp;
     private String thumbnailLocation;
 
     // ##################################################

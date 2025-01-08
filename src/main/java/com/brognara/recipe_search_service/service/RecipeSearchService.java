@@ -1,16 +1,20 @@
 package com.brognara.recipe_search_service.service;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.*;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.brognara.recipe_search_service.model.RecipeDocument;
 import com.brognara.recipe_search_service.model.RecipePublishRequest;
+import com.brognara.recipe_search_service.model.RecipeSearchRequest;
 import com.brognara.recipe_search_service.repository.RecipeRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+@Slf4j
 @Service
 public class RecipeSearchService {
 
@@ -55,9 +59,9 @@ public class RecipeSearchService {
                 .otherTags(
                         getOrEmptyList(recipePublishRequest.getOtherTags())
                 )
-                .nutritionalContents(
-                        getOrEmptyList(recipePublishRequest.getNutritionalContents())
-                )
+//                .nutritionalContents(
+//                        getOrEmptyList(recipePublishRequest.getNutritionalContents())
+//                )
                 .totalReviews(0)
                 .reviewScore(0)
                 .build();
@@ -68,22 +72,86 @@ public class RecipeSearchService {
                 .orElse(Collections.emptyList());
     }
 
-    // Search by cuisine
-//    public List<RecipeDocument> searchBySomething(String something) {
-//        return recipeRepository.findByCuisine(cuisine, PageRequest.of(0, 10)).getContent();
-//    }
+    public Mono<List<RecipeDocument>> searchRecipes(final RecipeSearchRequest recipeSearchRequest) {
+        return Mono.fromFuture(
+                recipeRepository.searchRecipes(
+                                new Query.Builder()
+                                        .bool(buildQuery(recipeSearchRequest))
+                                        .build()
+                        )
+                        .thenApply(
+                                searchResponse -> {
+                                    log.info("EVENT=SEARCH_RESPONSE ; DATA={}", searchResponse);
+                                    return searchResponse
+                                            .hits()
+                                            .hits()
+                                            .stream()
+                                            .map(Hit::source)
+                                            .toList();
+                                }
+                        )
+        );
+    }
 
-    // More complex search
-//    public List<RecipeDocument> searchByName(String name) {
-//        var searchQuery = new NativeSearchQueryBuilder()
-//                .withQuery(QueryBuilders.matchQuery("name", name))
-//                .build();
-//
-//        SearchHits<RecipeDocument> searchHits =
-//                elasticsearchOperations.search(searchQuery, RecipeDocument.class);
-//
-//        return searchHits.getSearchHits().stream()
-//                .map(hit -> hit.getContent())
-//                .toList();
-//    }
+    private BoolQuery buildQuery(final RecipeSearchRequest searchRequest) {
+        final String recipeNameFieldName = "name";
+
+        final BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder()
+                .must(
+                        new Query.Builder()
+                                .match(
+                                        new MatchQuery.Builder()
+                                        .field(recipeNameFieldName)
+                                        .query(searchRequest.getRecipeName())
+                                        .operator(Operator.And)
+                                        .build()
+                                )
+                                .build()
+                );
+
+        // add filters if present in search request
+        List<Query> filters = new LinkedList<>();
+        if (StringUtils.hasText(searchRequest.getCourse())) {
+            filters.add(
+              new Query.Builder()
+                      .term(
+                              new TermQuery.Builder()
+                                      .field("course")
+                                      .value(searchRequest.getCourse())
+                                      .build()
+                      )
+                      .build()
+            );
+        }
+        if (StringUtils.hasText(searchRequest.getCuisine())) {
+            filters.add(
+                    new Query.Builder()
+                            .term(
+                                    new TermQuery.Builder()
+                                            .field("cuisine")
+                                            .value(searchRequest.getCuisine())
+                                            .build()
+                            )
+                            .build()
+            );
+        }
+        if (StringUtils.hasText(searchRequest.getDishType())) {
+            filters.add(
+                    new Query.Builder()
+                            .term(
+                                    new TermQuery.Builder()
+                                            .field("dish_type")
+                                            .value(searchRequest.getDishType())
+                                            .build()
+                            )
+                            .build()
+            );
+        }
+
+        if (!filters.isEmpty()) {
+            boolQueryBuilder.filter(filters);
+        }
+
+        return boolQueryBuilder.build();
+    }
 }
