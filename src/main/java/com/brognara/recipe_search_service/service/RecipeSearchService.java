@@ -2,6 +2,7 @@ package com.brognara.recipe_search_service.service;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import com.brognara.recipe_search_service.SearchResponseUtils;
 import com.brognara.recipe_search_service.model.RecipeDocument;
 import com.brognara.recipe_search_service.model.RecipePublishRequest;
 import com.brognara.recipe_search_service.model.RecipeSearchRequest;
@@ -82,12 +83,7 @@ public class RecipeSearchService {
                         .thenApply(
                                 searchResponse -> {
                                     log.info("EVENT=SEARCH_RESPONSE ; DATA={}", searchResponse);
-                                    return searchResponse
-                                            .hits()
-                                            .hits()
-                                            .stream()
-                                            .map(Hit::source)
-                                            .toList();
+                                    return SearchResponseUtils.mapSearchResponseToRecipeDocs(searchResponse);
                                 }
                         )
         );
