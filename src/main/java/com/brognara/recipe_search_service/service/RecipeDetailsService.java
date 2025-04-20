@@ -3,6 +3,7 @@ package com.brognara.recipe_search_service.model;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import com.brognara.recipe_search_service.SearchResponseUtils;
+import com.brognara.recipe_search_service.repository.InMemoryFavoriteRecipesRepository;
 import com.brognara.recipe_search_service.repository.RecipeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,12 @@ public class RecipeDetailsService {
         // TODO add query - recipeName needs to be text and keyword so we can exact match
         return new TermQuery.Builder()
                 .build();
+    }
+
+    public Mono<List<String>> getFavoriteRecipes(final String userId) {
+        return Mono.just(
+                InMemoryFavoriteRecipesRepository.table.get(userId)
+        );
     }
 
 }
