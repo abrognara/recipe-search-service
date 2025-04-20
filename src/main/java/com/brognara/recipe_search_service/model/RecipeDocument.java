@@ -15,6 +15,7 @@ import java.util.List;
 @Document(indexName = "recipe")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RecipeDocument {
+    private String id;
     @JsonProperty("dish_name")
     private String dishName;
     private String name;

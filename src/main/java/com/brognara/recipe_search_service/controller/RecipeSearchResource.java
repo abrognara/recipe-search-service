@@ -1,6 +1,7 @@
 package com.brognara.recipe_search_service.controller;
 
 import com.brognara.recipe_search_service.model.*;
+import com.brognara.recipe_search_service.service.RecipeDetailsService;
 import com.brognara.recipe_search_service.service.RecipeSearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,10 +45,31 @@ public class RecipeSearchResource {
     }
 
     @CrossOrigin(origins = "http://localhost:3000")
-    @GetMapping("/details/{recipeName}")
-    public Mono<ResponseEntity<RecipeDocument>> getRecipeDetails(@PathVariable final String recipeName) {
-        log.info("EVENT=GET_RECIPE_DETAILS ; RECIPE_NAME={}", recipeName);
-        return recipeDetailsService.getRecipeDetails(recipeName)
+    @GetMapping("/details/{recipeDocId}")
+    public Mono<ResponseEntity<RecipeDocument>> getRecipeDetails(@PathVariable final String recipeDocId) {
+        log.info("EVENT=GET_RECIPE_DETAILS ; RECIPE_NAME={}", recipeDocId);
+        return recipeSearchService.getRecipeByDocId(recipeDocId)
+                .map(result -> ResponseEntity.status(HttpStatus.OK).body(result));
+    }
+
+    // TODO recipe favorites will be separate service
+    // Add/remove favorite from list and then return new list
+    @CrossOrigin(origins = "http://localhost:3000")
+    @PutMapping("/favorites")
+    public Mono<ResponseEntity<List<RecipeDocument>>> toggleFavoriteRecipe(
+            @RequestBody final ToggleFavoriteRecipeRequest toggleFavoriteRecipeRequest
+    ) {
+        log.info("EVENT=TOGGLE_FAVORITE_RECIPES ; RECIPES={}", toggleFavoriteRecipeRequest.toString());
+        return recipeDetailsService.toggleFavoriteRecipe("user", toggleFavoriteRecipeRequest)
+                .map(result -> ResponseEntity.status(HttpStatus.ACCEPTED).body(result));
+    }
+
+    // TODO recipe favorites will be separate service
+    @CrossOrigin(origins = "http://localhost:3000")
+    @GetMapping("/favorites")
+    public Mono<ResponseEntity<List<RecipeDocument>>> getFavoriteRecipes() {
+        log.info("EVENT=GET_FAVORITE_RECIPES");
+        return recipeDetailsService.getFavoriteRecipes("user")
                 .map(result -> ResponseEntity.status(HttpStatus.OK).body(result));
     }
 

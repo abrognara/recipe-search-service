@@ -7,6 +7,7 @@ import java.util.List;
 
 @ToString
 @Getter
-public class SetFavoriteRecipesRequest {
-    private List<String> favoriteRecipeNames;
+public class ToggleFavoriteRecipeRequest {
+    private RecipeDocument favoriteRecipe;
+    private boolean add;
 }

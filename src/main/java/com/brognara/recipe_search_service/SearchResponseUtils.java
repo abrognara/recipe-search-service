@@ -17,7 +17,15 @@ public class SearchResponseUtils {
                 .hits()
                 .hits()
                 .stream()
-                .map(Hit::source)
+                .map(hit -> {
+                    final RecipeDocument doc = hit.source();
+                    if (doc == null) {
+                        // TODO should this return null?
+                        return null;
+                    }
+                    doc.setId(hit.id());
+                    return doc;
+                })
                 .toList();
     }
 }
