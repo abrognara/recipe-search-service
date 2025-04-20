@@ -2,10 +2,7 @@ package com.brognara.recipe_search_service.repository;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.IndexRequest;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import com.brognara.recipe_search_service.model.RecipeDetailsResponse;
+import co.elastic.clients.elasticsearch.core.*;
 import com.brognara.recipe_search_service.model.RecipeDocument;
 
 import java.util.concurrent.CompletableFuture;
@@ -36,6 +33,17 @@ public class ElasticRecipeRepository implements RecipeRepository {
                         .index(indexName)
                         .query(query)
                 ),
+                RecipeDocument.class
+        );
+    }
+
+    @Override
+    public CompletableFuture<GetResponse<RecipeDocument>> getRecipeByDocId(String docId) {
+        return elasticsearchAsyncClient.get(
+          GetRequest.of(builder -> builder
+                  .index(indexName)
+                  .id(docId)
+          ),
                 RecipeDocument.class
         );
     }

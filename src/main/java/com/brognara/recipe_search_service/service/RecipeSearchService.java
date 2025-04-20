@@ -150,4 +150,16 @@ public class RecipeSearchService {
 
         return boolQueryBuilder.build();
     }
+
+    public Mono<RecipeDocument> getRecipeByDocId(final String docId) {
+        return Mono.fromFuture(
+                recipeRepository.getRecipeByDocId(docId)
+                        .thenApply(
+                                getResponse -> {
+                                    log.info("EVENT=GET_RECIPE_BY_DOC_ID_RESPONSE ; DATA={}", getResponse);
+                                    return getResponse.source();
+                                }
+                        )
+        );
+    }
 }
